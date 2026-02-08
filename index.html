@@ -13,26 +13,28 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Institut Racine - Simulateur de Tarifs</title>
     <style>
         /* --- BASE & COULEURS --- */
         body {
             margin: 0; background-color: #FEFCF3; color: #98525B;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            height: 100dvh; /* Utilise la hauteur dynamique du mobile */
             display: flex; justify-content: center; align-items: center;
             text-align: center; overflow: hidden;
         }
 
         .page {
             display: none; flex-direction: column; align-items: center;
-            width: 90%; max-width: 1000px; height: 90vh; position: relative;
+            width: 90%; max-width: 1000px; height: 95%; position: relative;
+            padding-bottom: 80px; /* Espace pour les boutons du bas */
         }
 
         .active { display: flex; }
 
-        h1 { font-size: 2.5rem; text-transform: uppercase; margin-top: 20px; }
-        h2 { font-size: 1.8rem; font-weight: 400; margin-bottom: 30px; }
+        h1 { font-size: 2.2rem; text-transform: uppercase; margin-top: 10px; }
+        h2 { font-size: 1.6rem; font-weight: 400; margin-bottom: 20px; }
 
         /* --- STYLE DES BULLES --- */
         .bubble-btn {
@@ -40,62 +42,69 @@
             border-radius: 50px; font-weight: bold; border: none; cursor: pointer;
             transition: transform 0.2s; display: flex; align-items: center; justify-content: center;
         }
-        .bubble-btn:hover { transform: scale(1.05); }
 
-        /* --- NAVIGATION --- */
+        /* --- ANIMATION DES BOUTONS (PULSE) --- */
+        @keyframes pulseNext {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); translate: 5px 0; }
+            100% { transform: scale(1); }
+        }
+
+        .pulse {
+            animation: pulseNext 2s infinite ease-in-out;
+        }
+
+        /* --- NAVIGATION REMONTÉE --- */
         .back-btn {
-            position: absolute; bottom: 10px; left: 10px; width: 50px; height: 50px;
-            border-radius: 50%; font-size: 1.5rem; box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            position: absolute; bottom: 40px; left: 10px; width: 55px; height: 55px;
+            border-radius: 50%; font-size: 1.5rem; box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            z-index: 100;
+        }
+
+        .next-btn {
+            position: absolute; bottom: 40px; right: 10px; width: 55px; height: 55px;
+            border-radius: 50%; font-size: 1.5rem; box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            z-index: 100;
         }
 
         /* --- ELEMENTS INTERACTIFS --- */
         .select-wrapper { position: relative; display: inline-block; vertical-align: middle; }
         .zone-select {
             appearance: none; background-color: #92152B; color: #FEFCF3;
-            padding: 8px 40px 8px 20px; border-radius: 50px; border: none;
-            font-size: 1.4rem; font-weight: bold; cursor: pointer; font-family: inherit;
-        }
-        .select-wrapper::after {
-            content: "▼"; font-size: 0.7rem; top: 50%; right: 15px; transform: translateY(-50%);
-            position: absolute; color: #FEFCF3; pointer-events: none;
+            padding: 8px 35px 8px 15px; border-radius: 50px; border: none;
+            font-size: 1.2rem; font-weight: bold; cursor: pointer; font-family: inherit;
         }
 
-        /* --- TEXTES & PRIX --- */
-        .underline { text-decoration: underline; font-weight: bold; }
-        .price-highlight { color: #92152B; font-weight: bold; font-size: 2rem; }
-        .price-crossed { text-decoration: line-through; opacity: 0.6; font-size: 1.4rem; }
-        .stamp {
-            margin-top: 40px; border: 4px solid #92152B; color: #92152B;
-            padding: 10px 20px; font-weight: 900; text-transform: uppercase;
-            font-size: 1.4rem; display: inline-block; transform: rotate(-5deg);
-            border-radius: 10px; letter-spacing: 2px;
-        }
+        .price-highlight { color: #92152B; font-weight: bold; font-size: 1.8rem; }
+        .price-crossed { text-decoration: line-through; opacity: 0.6; font-size: 1.2rem; }
 
         /* --- GRILLES ZONES --- */
         .grid-container {
-            display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 12px; width: 100%; padding: 10px; overflow-y: auto;
+            display: grid; grid-template-columns: repeat(2, 1fr);
+            gap: 10px; width: 100%; padding: 5px; overflow-y: auto;
+            max-height: 60dvh;
         }
-        .zone-btn { padding: 12px; font-size: 0.85rem; min-height: 45px; }
+        .zone-btn { padding: 10px; font-size: 0.8rem; min-height: 40px; }
 
-        /* --- PAGE 9 : PACKS --- */
-        .pack-list { display: flex; flex-direction: column; gap: 15px; width: 100%; max-width: 500px; margin-top: 20px; }
+        /* --- PACKS --- */
+        .pack-list { display: flex; flex-direction: column; gap: 10px; width: 100%; max-width: 400px; }
         .pack-item {
-            background: white; padding: 18px; border-radius: 20px; border: 2px solid #92152B;
-            box-shadow: 4px 4px 0px #92152B; display: flex; align-items: center; gap: 15px; text-align: left;
+            background: white; padding: 15px; border-radius: 15px; border: 2px solid #92152B;
+            box-shadow: 3px 3px 0px #92152B; display: flex; align-items: center; gap: 10px; text-align: left;
+            font-size: 0.9rem;
         }
         .reco-card {
-            background-color: #92152B; color: #FEFCF3; padding: 20px; border-radius: 20px;
-            margin-top: 25px; width: 100%; max-width: 500px; font-weight: bold;
+            background-color: #92152B; color: #FEFCF3; padding: 15px; border-radius: 15px;
+            margin-top: 15px; width: 100%; max-width: 400px; font-weight: bold; font-size: 0.9rem;
         }
     </style>
 </head>
 <body>
 
 <div id="page1" class="page active">
-  <h1 style="margin-top:40px">Institut Racine</h1>
+  <h1 style="margin-top:30px">Institut Racine</h1>
   <h2 style="margin:auto">L'épilation définitive au laser,<br>par une experte diplômée</h2>
-  <button class="bubble-btn" style="padding: 20px 40px; font-size: 1.3rem; margin-bottom:40px" onclick="showPage('page2')">Voir les tarifs</button>
+  <button class="bubble-btn pulse" style="padding: 20px 40px; font-size: 1.3rem; margin-bottom:80px" onclick="showPage('page2')">Voir les tarifs</button>
 </div>
 
 <div id="page2" class="page" style="justify-content: center;">
@@ -116,111 +125,84 @@
 </div>
 
 <div id="page4" class="page">
-  <div style="margin: auto; font-size: 3rem; display: flex; align-items: center; gap: 20px;">
+  <div style="margin: auto; font-size: 2.2rem; display: flex; align-items: center; gap: 15px;">
     <span id="selected-zone-name">Zone</span>
-    <span style="color:#92152B; font-size: 4rem;">→</span>
+    <span style="color:#92152B; font-size: 3rem;">→</span>
     <span id="selected-zone-price">0</span>€
   </div>
   <button class="bubble-btn back-btn" onclick="goBackToZones()">←</button>
-  <button class="bubble-btn" style="padding: 20px 45px; font-size: 1.4rem; position: absolute; bottom: 30px; right: 20px; box-shadow: 0 6px 12px rgba(146, 21, 43, 0.2);" onclick="showPage('page5')">Je veux payer moins chère →</button>
+  <button class="bubble-btn pulse" style="padding: 15px 30px; font-size: 1.1rem; position: absolute; bottom: 40px; right: 10px; box-shadow: 0 6px 12px rgba(146, 21, 43, 0.2);" onclick="showPage('page5')">Je veux payer moins cher →</button>
 </div>
 
 <div id="page5" class="page">
-  <div style="font-size: 1.6rem; line-height: 1.6; max-width: 800px; margin-top: 10vh;">
-    Pour être épiler définitivement il faudra au moins 8 séances. <br>
-    Nous devons respecter les cycles naturels du poils. <br>
-    C'est obligatoire pour un résultat optimal en toute sécurité.
+  <div style="font-size: 1.3rem; line-height: 1.5; max-width: 800px; margin-top: 5vh;">
+    Pour être épilée définitivement il faudra au moins 8 séances. <br>
+    Nous devons respecter les cycles naturels du poil. <br>
+    C'est obligatoire pour un résultat optimal.
   </div>
-  <div class="stamp">Experte diplômée</div>
+  <div style="margin-top: 30px; border: 3px solid #92152B; color: #92152B; padding: 10px; font-weight: 900; text-transform: uppercase; font-size: 1.1rem; transform: rotate(-5deg); border-radius: 10px;">Experte diplômée</div>
   <button class="bubble-btn back-btn" onclick="showPage('page4')">←</button>
-  <button class="bubble-btn" style="position: absolute; bottom: 10px; right: 10px; width: 50px; height: 50px; border-radius: 50%; font-size: 1.5rem;" onclick="showPage('page6')">→</button>
+  <button class="bubble-btn next-btn pulse" onclick="showPage('page6')">→</button>
 </div>
 
 <div id="page6" class="page">
-  <div style="font-size: 1.8rem; line-height: 2.2; max-width: 850px; margin-top: 10vh;">
-    Vous avez de la chance !<br> Chez Institut Racine, pour la prise d'un pack pour <br>
+  <div style="font-size: 1.4rem; line-height: 1.8; margin-top: 5vh;">
+    Vous avez de la chance !<br> Chez Institut Racine, pour un pack pour <br>
     <div class="select-wrapper">
       <select id="zone-dropdown-6" class="zone-select" onchange="syncAndSwitch(this.value)"></select>
     </div>
-    <br>on vous offre <span style="font-weight: bold; font-size: 2.5rem; color: #92152B; border-bottom: 3px solid #92152B;"><span id="offer-amount">0</span>€</span> !
+    <br>on vous offre <span style="font-weight: bold; color: #92152B; border-bottom: 2px solid #92152B;"><span id="offer-amount">0</span>€</span> !
   </div>
   <button class="bubble-btn back-btn" onclick="showPage('page5')">←</button>
-  <button class="bubble-btn" style="position: absolute; bottom: 10px; right: 10px; width: 50px; height: 50px; border-radius: 50%; font-size: 1.5rem;" onclick="showPage('page7')">→</button>
+  <button class="bubble-btn next-btn pulse" onclick="showPage('page7')">→</button>
 </div>
 
 <div id="page7" class="page">
-  <div style="font-size: 1.8rem; line-height: 2; max-width: 850px; margin-top: 10vh;">
-    Pour la zone 
-    <div class="select-wrapper">
-      <select id="zone-dropdown-7" class="zone-select" onchange="syncAndSwitch(this.value)"></select>
-    </div>, <br>
-    le pack de 8 séances est donc à <span class="price-highlight"><span id="pack-price">0</span> €</span> <br>
-    au lieu de <span class="price-crossed" style="font-size: 1.8rem; opacity: 1;"><span id="full-price">0</span> €</span> !
-    
-    <div style="margin-top: 30px; font-style: italic; font-size: 1.1rem; opacity: 0.9;">
-      Rappel : Votre corps ne peut pas être épilé définitivement en moins de 8 séances.
-    </div>
+  <div style="font-size: 1.4rem; line-height: 1.8; margin-top: 5vh;">
+    Pour la zone <br>
+    <div class="select-wrapper"><select id="zone-dropdown-7" class="zone-select" onchange="syncAndSwitch(this.value)"></select></div><br>
+    le pack de 8 séances est à <br><span class="price-highlight"><span id="pack-price">0</span> €</span> <br>
+    au lieu de <span class="price-crossed"><span id="full-price">0</span> €</span> !
+    <div style="margin-top: 20px; font-style: italic; font-size: 0.9rem; opacity: 0.8;">Rappel : On ne peut pas être épilée définitivement en moins de 8 séances.</div>
   </div>
   <button class="bubble-btn back-btn" onclick="showPage('page6')">←</button>
-  <button class="bubble-btn" style="position: absolute; bottom: 10px; right: 10px; width: 50px; height: 50px; border-radius: 50%; font-size: 1.5rem;" onclick="showPage('page8')">→</button>
+  <button class="bubble-btn next-btn pulse" onclick="showPage('page8')">→</button>
 </div>
 
 <div id="page8" class="page">
-  <div class="underline" style="font-size: 2.2rem; margin-bottom: 30px;">Mes options</div>
-  
-  <div style="font-size: 1.6rem; margin: 15px 0;">
-    Règlement comptant : <span class="price-highlight"><span id="opt-pack-price">0</span> €</span> 
+  <h2 class="underline" style="font-size: 1.8rem;">Mes options</h2>
+  <div style="font-size: 1.3rem; margin: 10px 0;">
+    Règlement comptant : <br><span class="price-highlight"><span id="opt-pack-price">0</span> €</span> 
     <span class="price-crossed"><span id="opt-full-price">0</span> €</span>
   </div>
-
-  <div style="font-size: 1.5rem; margin: 10px 0;">ou</div>
-
-  <div style="font-size: 1.6rem; margin: 15px 0;">
+  <div style="font-size: 1.2rem; margin: 5px 0;">ou</div>
+  <div style="font-size: 1.3rem;">
     <span class="price-highlight"><span id="opt-monthly-price">0</span> €/mois</span>
   </div>
-
   <button class="bubble-btn back-btn" onclick="showPage('page7')">←</button>
-  <button class="bubble-btn" style="padding: 15px 30px; position: absolute; bottom: 10px; right: 10px;" onclick="showPage('page9')">Je veux une meilleure offre →</button>
+  <button class="bubble-btn pulse" style="padding: 15px 25px; position: absolute; bottom: 40px; right: 10px; font-size: 0.9rem;" onclick="showPage('page9')">Je veux une meilleure offre →</button>
 </div>
 
 <div id="page9" class="page">
-    <div class="underline" style="font-size: 2.2rem; margin-bottom: 20px;">Les packs</div>
-    
+    <h2 class="underline" style="font-size: 1.8rem;">Les packs</h2>
     <div class="pack-list">
-      <div class="pack-item">
-        <span style="font-size: 2rem;">✨</span>
-        <div><strong>2 zones</strong> = une petite zone offerte</div>
-      </div>
-  
-      <div class="pack-item">
-        <span style="font-size: 2rem;">💎</span>
-        <div><strong>3 zones</strong> = Aisselles ou SIF ou Visage <br>+ une petite zone offerte</div>
-      </div>
+      <div class="pack-item"><span>✨</span><div><strong>2 zones</strong> = une petite zone offerte</div></div>
+      <div class="pack-item"><span>💎</span><div><strong>3 zones</strong> = Aisselles ou SIF ou Visage <br>+ une petite zone offerte</div></div>
     </div>
-  
     <div class="reco-card">
-      🎁 Pour vous, à chaque personne que vous nous recommandez = -10 % supplémentaire.
+      🎁 Pour vous, à chaque personne recommandée = -10 % supplémentaire.
     </div>
-  
     <button class="bubble-btn back-btn" onclick="showPage('page8')">←</button>
-    </div>
+</div>
 
 <script>
   let currentGender = '';
   const prices = {
-    "Aisselles": 46, "Maillot intégral": 112, "Maillot classique ou semi-integral": 56,
-    "Maillot brésilien, échancré": 78, "Demi-jambes": 134, "Jambes complètes": 299,
-    "Avant-bras": 100, "Bras entiers": 134, "Visage": 46, "Sillon interfessier": 46,
-    "Petites zones": 46, "Col de chemise": 46, "Dos/Torse": 146, "Barbe": 112, "Maillot": 393
+    "Aisselles": 46, "Maillot intégral": 112, "Maillot classique ou semi-integral": 56, "Maillot brésilien, échancré": 78, "Demi-jambes": 134, "Jambes complètes": 299, "Avant-bras": 100, "Bras entiers": 134, "Visage": 46, "Sillon interfessier": 46, "Petites zones": 46, "Col de chemise": 46, "Dos/Torse": 146, "Barbe": 112, "Maillot": 393
   };
-
   const monthlyPrices = {
-    "Aisselles": 46, "Maillot intégral": 72, "Maillot classique ou semi-integral": 46,
-    "Maillot brésilien, échancré": 50, "Demi-jambes": 86, "Jambes complètes": 191,
-    "Avant-bras": 64, "Bras entiers": 86, "Visage": 46, "Sillon interfessier": 46,
-    "Petites zones": 46, "Col de chemise": 46, "Dos/Torse": 94, "Barbe": 72, "Maillot": 249
+    "Aisselles": 46, "Maillot intégral": 72, "Maillot classique ou semi-integral": 46, "Maillot brésilien, échancré": 50, "Demi-jambes": 86, "Jambes complètes": 191, "Avant-bras": 64, "Bras entiers": 86, "Visage": 46, "Sillon interfessier": 46, "Petites zones": 46, "Col de chemise": 46, "Dos/Torse": 94, "Barbe": 72, "Maillot": 249
   };
-
   const zonesFemme = ["Aisselles", "Maillot intégral", "Maillot classique ou semi-integral", "Maillot brésilien, échancré", "Demi-jambes", "Jambes complètes", "Avant-bras", "Bras entiers", "Visage", "Sillon interfessier", "Petites zones"];
   const zonesHomme = ["Aisselles", "Maillot", "Demi-jambes", "Jambes complètes", "Avant-bras", "Bras entiers", "Visage", "Sillon interfessier", "Petites zones", "Col de chemise", "Dos/Torse", "Barbe"];
 
@@ -229,15 +211,10 @@
     const hGrid = document.getElementById('grid-homme');
     const d6 = document.getElementById('zone-dropdown-6');
     const d7 = document.getElementById('zone-dropdown-7');
-    
     zonesFemme.forEach(z => { fGrid.innerHTML += `<button class="bubble-btn zone-btn" onclick="selectZone('${z}')">${z}</button>`; });
     zonesHomme.forEach(z => { hGrid.innerHTML += `<button class="bubble-btn zone-btn" onclick="selectZone('${z}')">${z}</button>`; });
-    
     const allZones = [...new Set([...zonesFemme, ...zonesHomme])];
-    allZones.forEach(z => {
-      d6.innerHTML += `<option value="${z}">${z}</option>`;
-      d7.innerHTML += `<option value="${z}">${z}</option>`;
-    });
+    allZones.forEach(z => { d6.innerHTML += `<option value="${z}">${z}</option>`; d7.innerHTML += `<option value="${z}">${z}</option>`; });
   }
 
   function showPage(pageId) {
@@ -257,23 +234,18 @@
   function syncAndSwitch(zone) {
     document.getElementById('zone-dropdown-6').value = zone;
     document.getElementById('zone-dropdown-7').value = zone;
-    
     const unit = prices[zone];
-    const monthly = monthlyPrices[zone] || 0;
-
     document.getElementById('offer-amount').innerText = unit;
     document.getElementById('full-price').innerText = unit * 8;
     document.getElementById('pack-price').innerText = unit * 7;
-    
     document.getElementById('opt-pack-price').innerText = unit * 7;
     document.getElementById('opt-full-price').innerText = unit * 8;
-    document.getElementById('opt-monthly-price').innerText = monthly;
+    document.getElementById('opt-monthly-price').innerText = monthlyPrices[zone] || 0;
   }
 
   function goBackToZones() { showPage('page3_' + currentGender); }
   generateZones();
 </script>
-
 </body>
 </html>
     
